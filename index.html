@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tecnología para todos · UDABOL DIF · Mirador de Pasankeri</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background-color: #f3f5f8;
+      color: #1e293b;
+    }
+    .easy-reading .question-title {
+      font-size: 1.35rem !important;
+      line-height: 1.65 !important;
+    }
+    .easy-reading .aymara-sub {
+      font-size: 1.05rem !important;
+    }
+    .easy-reading .option-label {
+      font-size: 1.15rem !important;
+    }
+    .option-card {
+      transition: all 0.15s ease;
+      border: 1.5px solid #e2e8f0;
+      background: #ffffff;
+    }
+    .option-card:hover {
+      border-color: #2563eb;
+      background: #f8fafc;
+      transform: translateY(-1px);
+    }
+    .option-card.selected {
+      border-color: #1d4ed8;
+      background: #eff6ff;
+      box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    }
+    .tab-active {
+      border-bottom: 3px solid #ea580c;
+      color: #0f172a;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Encabezado Superior -->
+  <header class="bg-[#0f1f38] text-white shadow-md">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-orange-500 flex items-center justify-center text-white text-lg shadow">
+          <i class="fa-solid fa-mountain-sun"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <span id="brandTitle" class="font-bold text-lg tracking-tight">Tecnología para todos</span>
+            <span class="text-xs font-semibold bg-teal-600/90 text-white px-2 py-0.5 rounded">UDABOL · DIF</span>
+          </div>
+          <p id="brandSubtitle" class="text-xs text-slate-300">Diagnóstico Sociodemográfico · Mirador de Pasankeri (Cotahuma, La Paz)</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 flex-wrap">
+        <button id="btnLang" onclick="toggleLang()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-medium flex items-center gap-1.5">
+          <i class="fa-solid fa-language text-amber-400"></i>
+          <span id="langLabel">Idioma: Español + Aymara</span>
+        </button>
+
+        <button id="btnEasy" onclick="toggleEasyReading()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-medium flex items-center gap-1.5">
+          <i class="fa-solid fa-text-height text-sky-400"></i>
+          <span id="easyLabel">Lectura Fácil: OFF</span>
+        </button>
+
+        <div class="px-3 py-1.5 rounded-lg bg-emerald-950/90 border border-emerald-600/60 text-emerald-300 text-xs font-medium flex items-center gap-1.5">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span id="statusBadge">Guardado Seguro / Offline</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navegación por Pestañas -->
+    <nav class="bg-white text-slate-600 border-b border-slate-200">
+      <div class="max-w-6xl mx-auto px-4 flex gap-6 overflow-x-auto text-sm">
+        <button id="tab-survey" onclick="switchTab('survey')" class="py-3 px-1 flex items-center gap-2 whitespace-nowrap tab-active">
+          <i class="fa-solid fa-clipboard-list text-orange-600"></i>
+          <span id="tabSurveyLabel">1. Encuesta Ciudadana</span>
+        </button>
+
+        <button id="tab-dashboard" onclick="switchTab('dashboard')" class="py-3 px-1 flex items-center gap-2 whitespace-nowrap hover:text-slate-900">
+          <i class="fa-solid fa-chart-pie text-teal-600"></i>
+          <span id="tabDashboardLabel">2. Dashboard de Brechas</span>
+          <span id="countBadge" class="bg-orange-600 text-white text-xs font-bold px-2 py-0.5 rounded-full">0</span>
+        </button>
+
+        <button id="tab-manage" onclick="switchTab('manage')" class="py-3 px-1 flex items-center gap-2 whitespace-nowrap hover:text-slate-900">
+          <i class="fa-solid fa-database text-amber-600"></i>
+          <span id="tabManageLabel">3. Gestión, Seguridad y Exportación</span>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Contenido Principal -->
+  <main id="appContainer" class="flex-1 max-w-5xl w-full mx-auto px-4 py-6">
+
+    <!-- PESTAÑA 1: ENCUESTA CIUDADANA -->
+    <section id="view-survey" class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div class="flex flex-wrap items-center justify-between gap-2 pb-4 mb-6 border-b border-slate-100">
+        <div>
+          <span id="blockIndicator" class="inline-block text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md mb-1">
+            BLOQUE 1 DE 4
+          </span>
+          <h2 id="blockTitle" class="text-xl font-bold text-slate-900">Perfil Sociodemográfico y Vínculo con el Mirador</h2>
+          <p id="blockSubtitle" class="text-sm text-slate-500">Datos anónimos y confidenciales con fines académicos (UDABOL · DIF).</p>
+        </div>
+        <div class="w-40">
+          <div class="flex justify-between text-xs text-slate-500 mb-1">
+            <span id="progressText">Progreso</span>
+            <span id="progressPercent">25%</span>
+          </div>
+          <div class="w-full h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div id="progressBar" class="h-full bg-blue-600 transition-all duration-300" style="width: 25%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contenedor Dinámico de Preguntas -->
+      <div id="questionsContainer" class="space-y-8"></div>
+
+      <!-- Mensaje de Validación -->
+      <div id="validationAlert" class="hidden mt-6 p-3 rounded-lg bg-red-50 border border-red-200 text-red-700 text-sm font-medium flex items-center gap-2">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span id="validationText">Por favor seleccione una opción en las preguntas marcadas con (*) antes de continuar.</span>
+      </div>
+
+      <!-- Botones de Navegación del Bloque -->
+      <div class="mt-8 pt-4 border-t border-slate-100 flex items-center justify-between">
+        <button id="btnPrev" onclick="prevBlock()" class="px-4 py-2.5 rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-50 text-sm font-semibold disabled:opacity-40" disabled>
+          <i class="fa-solid fa-arrow-left mr-1.5"></i> <span id="btnPrevText">Anterior</span>
+        </button>
+
+        <button id="btnNext" onclick="nextBlock()" class="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm">
+          <span id="btnNextText">Siguiente bloque</span> <i class="fa-solid fa-arrow-right ml-1.5"></i>
+        </button>
+
+        <button id="btnSubmit" onclick="submitSurvey()" class="hidden px-6 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm">
+          <i class="fa-solid fa-check mr-1.5"></i> <span id="btnSubmitText">Guardar encuesta</span>
+        </button>
+      </div>
+
+      <!-- Confirmación de Envío -->
+      <div id="submitSuccess" class="hidden mt-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900">
+        <div class="flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h3 id="successTitle" class="font-bold text-base flex items-center gap-2">
+              <i class="fa-solid fa-circle-check text-emerald-600"></i>
+              ¡Encuesta registrada correctamente!
+            </h3>
+            <p id="syncStatusText" class="text-sm mt-1 text-emerald-800">Guardada en el dispositivo (modo offline seguro).</p>
+          </div>
+          <button onclick="resetFormForNext()" class="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold">
+            <span id="btnNewSurveyText">Nueva encuesta</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- PESTAÑA 2: DASHBOARD DE BRECHAS -->
+    <section id="view-dashboard" class="hidden space-y-6">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-xs text-slate-500 font-medium">Total Encuestas</p>
+          <p id="kpiTotal" class="text-2xl font-bold text-slate-900 mt-1">0</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-xs text-slate-500 font-medium">Visitantes / No residentes</p>
+          <p id="kpiVisitors" class="text-2xl font-bold text-orange-600 mt-1">0%</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-xs text-slate-500 font-medium">Conectividad Internet</p>
+          <p id="kpiInternet" class="text-2xl font-bold text-blue-600 mt-1">0%</p>
+        </div>
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <p class="text-xs text-slate-500 font-medium">Idiomas No Castellano</p>
+          <p id="kpiLangDiversity" class="text-2xl font-bold text-teal-600 mt-1">0%</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <h3 class="font-bold text-slate-800 text-sm mb-3">Vínculo o Permanencia en Mirador de Pasankeri</h3>
+          <canvas id="chartVinculo" height="210"></canvas>
+        </div>
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <h3 class="font-bold text-slate-800 text-sm mb-3">Lugar de Origen o Procedencia</h3>
+          <canvas id="chartOrigen" height="210"></canvas>
+        </div>
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <h3 class="font-bold text-slate-800 text-sm mb-3">Idioma Principal / Comunicación</h3>
+          <canvas id="chartIdioma" height="210"></canvas>
+        </div>
+        <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+          <h3 class="font-bold text-slate-800 text-sm mb-3">Acceso a Internet y Dispositivos</h3>
+          <canvas id="chartConectividad" height="210"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- PESTAÑA 3: GESTIÓN, SEGURIDAD Y EXPORTACIÓN -->
+    <section id="view-manage" class="hidden space-y-6">
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="font-bold text-slate-900 text-base mb-2">Exportación y Respaldo de Datos</h3>
+        <p class="text-sm text-slate-600 mb-4">Descarga los registros recolectados en formato CSV compatible con Excel o JSON para respaldo técnico.</p>
+        <div class="flex flex-wrap gap-3">
+          <button onclick="exportCSV()" class="px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">
+            <i class="fa-solid fa-file-csv mr-1.5"></i> Exportar a CSV (Excel)
+          </button>
+          <button onclick="exportJSON()" class="px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold">
+            <i class="fa-solid fa-file-code mr-1.5"></i> Exportar JSON
+          </button>
+          <button onclick="loadSampleData()" class="px-4 py-2.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 text-sm font-semibold">
+            <i class="fa-solid fa-flask mr-1.5"></i> Cargar 25 datos de prueba
+          </button>
+          <button onclick="clearAllRecords()" class="px-4 py-2.5 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-sm font-semibold">
+            <i class="fa-solid fa-trash-can mr-1.5"></i> Vaciar Todo (<span id="clearCountLabel">0</span> registros)
+          </button>
+        </div>
+      </div>
+
+      <!-- Sincronización Centralizada Opcional (Google Apps Script / Supabase) -->
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+        <h3 class="font-bold text-slate-900 text-base mb-1">Sincronización Centralizada en la Nube (Opcional)</h3>
+        <p class="text-sm text-slate-600 mb-4">Conecta un endpoint de <strong>Google Apps Script</strong> (Web App URL) o <strong>Supabase REST</strong> para centralizar las respuestas de todo el grupo.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Endpoint URL (Google Apps Script / Webhook)</label>
+            <input id="cloudUrl" type="url" placeholder="https://script.google.com/macros/s/.../exec" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">API Key / Bearer Token (Opcional - ej. Supabase anon key)</label>
+            <input id="cloudKey" type="password" placeholder="Opcional si no requiere cabecera" class="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm" />
+          </div>
+        </div>
+
+        <div class="mt-4 flex flex-wrap items-center gap-3">
+          <button onclick="saveCloudConfig()" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold">
+            Guardar configuración
+          </button>
+          <button onclick="syncPendingRecords()" class="px-4 py-2 rounded-lg bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold">
+            <i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> Sincronizar pendientes ahora
+          </button>
+          <span id="cloudConfigMsg" class="text-xs text-slate-600"></span>
+        </div>
+      </div>
+
+      <!-- Tabla de Registros -->
+      <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm overflow-x-auto">
+        <h3 class="font-bold text-slate-900 text-base mb-3">Registros Almacenados</h3>
+        <table class="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr class="border-b border-slate-200 text-slate-500 uppercase">
+              <th class="py-2 pr-3">#</th>
+              <th class="py-2 pr-3">Fecha</th>
+              <th class="py-2 pr-3">Edad</th>
+              <th class="py-2 pr-3">Vínculo Pasankeri</th>
+              <th class="py-2 pr-3">Procedencia</th>
+              <th class="py-2 pr-3">Idioma</th>
+              <th class="py-2 pr-3">Internet</th>
+              <th class="py-2">Estado Sync</th>
+            </tr>
+          </thead>
+          <tbody id="recordsTableBody" class="divide-y divide-slate-100 text-slate-700"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    const STORAGE_KEY = 'udabol_dif_pasankeri_records_v2';
+    const CLOUD_CFG_KEY = 'udabol_dif_pasankeri_cloud_v2';
+    const DEFAULT_SUPABASE_URL = 'https://lfbjerdtckrsfwwmanku.supabase.co/rest/v1/encuestas_pasankeri';
+
+    const UI_TEXT = {
+      es_ay: {
+        langBtn: 'Idioma: Español + Aymara',
+        easyOff: 'Lectura Fácil: OFF',
+        easyOn: 'Lectura Fácil: ON',
+        statusBadge: 'Guardado Seguro / Offline',
+        brandSubtitle: 'Diagnóstico Sociodemográfico · Mirador de Pasankeri (Cotahuma, La Paz)',
+        tabSurvey: '1. Encuesta Ciudadana',
+        tabDashboard: '2. Dashboard de Brechas',
+        tabManage: '3. Gestión, Seguridad y Exportación',
+        blockPrefix: 'BLOQUE',
+        blockOf: 'DE',
+        progressText: 'Progreso',
+        validationText: 'Por favor seleccione una opción en las preguntas marcadas con (*) antes de continuar.',
+        btnPrev: 'Anterior',
+        btnNext: 'Siguiente bloque',
+        btnSubmit: 'Guardar encuesta',
+        successTitle: '¡Encuesta registrada correctamente!',
+        btnNewSurvey: 'Nueva encuesta'
+      },
+      en: {
+        langBtn: 'Language: English',
+        easyOff: 'Easy Reading: OFF',
+        easyOn: 'Easy Reading: ON',
+        statusBadge: 'Safe Storage / Offline',
+        brandSubtitle: 'Sociodemographic Diagnostic · Pasankeri Lookout (Cotahuma, La Paz)',
+        tabSurvey: '1. Citizen Survey',
+        tabDashboard: '2. Gap Dashboard',
+        tabManage: '3. Management, Security & Export',
+        blockPrefix: 'BLOCK',
+        blockOf: 'OF',
+        progressText: 'Progress',
+        validationText: 'Please select an option for all required (*) questions before continuing.',
+        btnPrev: 'Previous',
+        btnNext: 'Next block',
+        btnSubmit: 'Save survey',
+        successTitle: 'Survey recorded successfully!',
+        btnNewSurvey: 'New survey'
+      }
+    };
+
+    const BLOCKS = [
+      {
+        title: 'Perfil Sociodemográfico y Vínculo con el Mirador',
+        titleEn: 'Sociodemographic Profile and Connection to the Lookout',
+        subtitle: 'Datos anónimos y confidenciales con fines académicos (UDABOL · DIF).',
+        subtitleEn: 'Anonymous and confidential data for academic purposes (UDABOL · DIF).',
+        questions: [
+          {
+            id: 'edad',
+            label: '1.1 ¿Cuál es su rango de edad? *',
+            labelEn: '1.1 What is your age group? *',
+            aymara: 'Qawqha maranïtasa? (Wata t\'aqa)',
+            subEn: 'Select one age range',
+            options: [
+              { value: '18-29', label: '18 a 29', labelEn: '18 to 29', sub: 'Joven · Wayna / Tawaqu', subEn: 'Young adult', icon: 'fa-user-graduate' },
+              { value: '30-44', label: '30 a 44', labelEn: '30 to 44', sub: 'Adulto joven · Jiliri wayna', subEn: 'Early middle age', icon: 'fa-user' },
+              { value: '45-59', label: '45 a 59', labelEn: '45 to 59', sub: 'Adulto · Jiliri jaqi', subEn: 'Middle age', icon: 'fa-user-tie' },
+              { value: '60+', label: '60 o más', labelEn: '60 or older', sub: 'Adulto mayor · Awki / Tayka', subEn: 'Older adult', icon: 'fa-person-cane' }
+            ]
+          },
+          {
+            id: 'vinculo_pasankeri',
+            label: '1.2 ¿Cuál es su vínculo o tiempo de permanencia en el sector Mirador de Pasankeri? *',
+            labelEn: '1.2 What is your connection or length of stay at Pasankeri Lookout? *',
+            aymara: 'Kunjamasa Pasankeri miradoran jakta jan ukax purinta? (Qawqha pacha)',
+            subEn: 'Residents, visitors, and workers',
+            options: [
+              { value: 'no_vive_visitante', label: 'No vivo aquí (visitante / de paso)', labelEn: 'I do not live here (visitor / passing by)', sub: 'Janiw aka cheqan jakti · Tumpiri', subEn: 'Tourist or occasional visitor', icon: 'fa-camera-retro' },
+              { value: 'no_vive_trabajo', label: 'No vivo aquí (trabajo / comercio ocasional)', labelEn: 'I do not live here (work / occasional trade)', sub: 'Janiw aka cheqan jakti · Irnaqiri', subEn: 'Working or selling in the area', icon: 'fa-store' },
+              { value: 'menos_1_ano', label: 'Vivo aquí hace menos de 1 año', labelEn: 'Living here for less than 1 year', sub: 'May marat juk\'amp juk\'a jakta', subEn: 'Recent resident', icon: 'fa-seedling' },
+              { value: '1_a_5_anos', label: 'Vivo aquí entre 1 y 5 años', labelEn: 'Living here between 1 and 5 years', sub: 'Maya phesqa marakam jakta', subEn: 'Medium-term resident', icon: 'fa-house-user' },
+              { value: 'mas_5_anos', label: 'Vivo aquí hace más de 5 años', labelEn: 'Living here for more than 5 years', sub: 'Phesqa marat juk\'amp jakta', subEn: 'Long-term resident', icon: 'fa-landmark' }
+            ]
+          },
+          {
+            id: 'procedencia',
+            label: '1.3 ¿Cuál es su lugar de origen o procedencia principal? *',
+            labelEn: '1.3 Where is your main place of origin? *',
+            aymara: 'Kawkhat jutäta? (Marka / Suyu / Yaqha marka)',
+            subEn: 'Select origin or visitor status',
+            options: [
+              { value: 'La Paz Urbana', label: 'La Paz - Área urbana', labelEn: 'La Paz - Urban area', sub: 'Chuqiyapu jach\'a marka', subEn: 'Urban La Paz', icon: 'fa-city' },
+              { value: 'Área Rural / Provincias', label: 'Área rural / Provincias de La Paz', labelEn: 'Rural area / La Paz provinces', sub: 'Ayllunaka / Suyunaka', subEn: 'Rural migrant / province', icon: 'fa-wheat-awn' },
+              { value: 'Otro Departamento', label: 'Otro departamento de Bolivia', labelEn: 'Another department of Bolivia', sub: 'Wuliwya yaqha suyuta', subEn: 'Other Bolivian region', icon: 'fa-map-location-dot' },
+              { value: 'Extranjero / Visitante', label: 'Extranjero / Visitante internacional', labelEn: 'Foreigner / International visitor', sub: 'Yaqha markat puriri · Foreign visitor', subEn: 'International traveler', icon: 'fa-globe' }
+            ]
+          },
+          {
+            id: 'idioma',
+            label: '1.4 ¿Cuál es su idioma principal en el hogar o de comunicación habitual? *',
+            labelEn: '1.4 What is your primary home or everyday language? *',
+            aymara: 'Kawkïr aruparak parlt\'asta? (Castellano / Aymara / Quechua / English)',
+            subEn: 'Primary language spoken',
+            options: [
+              { value: 'Castellano', label: 'Castellano', labelEn: 'Spanish', sub: 'Kastilla aru', subEn: 'Castellano', icon: 'fa-comments' },
+              { value: 'Aymara', label: 'Aymara', labelEn: 'Aymara', sub: 'Aymar aru', subEn: 'Andean language', icon: 'fa-comment-dots' },
+              { value: 'Quechua', label: 'Quechua', labelEn: 'Quechua', sub: 'Qhichwa aru', subEn: 'Andean language', icon: 'fa-ear-listen' },
+              { value: 'Bilingüe', label: 'Bilingüe (Castellano / Aymara o Quechua)', labelEn: 'Bilingual (Spanish / Aymara or Quechua)', sub: 'Pä aru parliri', subEn: 'Two languages', icon: 'fa-people-arrows' },
+              { value: 'Inglés', label: 'Inglés', labelEn: 'English', sub: 'Inglés · Foreign language', subEn: 'English speaker', icon: 'fa-earth-americas' }
+            ]
+          }
+        ]
+      },
+      {
+        title: 'Condiciones Socioeconómicas y Entorno',
+        titleEn: 'Socioeconomic Conditions and Environment',
+        subtitle: 'Aspectos educativos, laborales y servicios básicos.',
+        subtitleEn: 'Education, work, and local conditions.',
+        questions: [
+          {
+            id: 'educacion',
+            label: '2.1 ¿Cuál es su nivel educativo alcanzado? *',
+            labelEn: '2.1 What is your highest education level? *',
+            aymara: 'Kawkïr yatiqañkamak purt\'ata?',
+            subEn: 'Education level',
+            options: [
+              { value: 'Primaria', label: 'Primaria / Básica', labelEn: 'Primary / Elementary', sub: 'Qallta yatiqaña', subEn: 'Basic school', icon: 'fa-book-open' },
+              { value: 'Secundaria', label: 'Secundaria / Bachillerato', labelEn: 'Secondary / High school', sub: 'Payïr yatiqaña', subEn: 'High school', icon: 'fa-school' },
+              { value: 'Técnico / Universitario', label: 'Técnico / Universitario', labelEn: 'Technical / University', sub: 'Jach\'a yatiqañ uta', subEn: 'Higher education', icon: 'fa-graduation-cap' },
+              { value: 'Sin estudios formales', label: 'Sin estudios formales', labelEn: 'No formal schooling', sub: 'Janiw yatiqañ utankkiti', subEn: 'No formal education', icon: 'fa-hand-holding-heart' }
+            ]
+          },
+          {
+            id: 'ocupacion',
+            label: '2.2 ¿Cuál es su actividad principal actual? *',
+            labelEn: '2.2 What is your main current activity? *',
+            aymara: 'Kuns lurta jichhürunakan?',
+            subEn: 'Main occupation or activity',
+            options: [
+              { value: 'Comercio / Independiente', label: 'Comercio / Trabajo independiente', labelEn: 'Commerce / Self-employed', sub: 'Aljasiña / Sapak irnaqaña', subEn: 'Independent work', icon: 'fa-shop' },
+              { value: 'Asalariado / Empleado', label: 'Empleado / Asalariado', labelEn: 'Employed / Salaried', sub: 'Irnaqawi', subEn: 'Salaried job', icon: 'fa-briefcase' },
+              { value: 'Estudiante', label: 'Estudiante', labelEn: 'Student', sub: 'Yatiqiri', subEn: 'Studying', icon: 'fa-book' },
+              { value: 'Hogar / Jubilado / Otro', label: 'Hogar / Jubilado / Otro', labelEn: 'Homemaker / Retired / Other', sub: 'Utan irnaqaña / Samart\'ata', subEn: 'Other activity', icon: 'fa-house' }
+            ]
+          }
+        ]
+      },
+      {
+        title: 'Acceso Tecnológico y Conectividad',
+        titleEn: 'Technology Access and Connectivity',
+        subtitle: 'Disponibilidad de dispositivos digitales y conexión a internet.',
+        subtitleEn: 'Availability of digital devices and internet access.',
+        questions: [
+          {
+            id: 'dispositivo',
+            label: '3.1 ¿Qué dispositivo digital utiliza con mayor frecuencia? *',
+            labelEn: '3.1 Which digital device do you use most often? *',
+            aymara: 'Kawkïr yänakampis apnaqta?',
+            subEn: 'Primary device',
+            options: [
+              { value: 'Smartphone', label: 'Teléfono inteligente (Smartphone)', labelEn: 'Smartphone', sub: 'K\'uchi celular', subEn: 'Smart mobile phone', icon: 'fa-mobile-screen-button' },
+              { value: 'Celular básico', label: 'Celular básico (llamadas / SMS)', labelEn: 'Basic phone (calls / SMS)', sub: 'Jawsañataki celular', subEn: 'Feature phone', icon: 'fa-phone' },
+              { value: 'Computadora / Tablet', label: 'Computadora o Tablet', labelEn: 'Computer or Tablet', sub: 'Computadora / Tablet', subEn: 'PC, laptop, or tablet', icon: 'fa-laptop' },
+              { value: 'Ninguno', label: 'No utiliza dispositivos digitales', labelEn: 'None', sub: 'Janiw apnaqkti', subEn: 'No digital device', icon: 'fa-ban' }
+            ]
+          },
+          {
+            id: 'internet',
+            label: '3.2 ¿Cuenta con acceso habitual a internet? *',
+            labelEn: '3.2 Do you have regular access to the internet? *',
+            aymara: 'Internet utjiti?',
+            subEn: 'Internet connectivity',
+            options: [
+              { value: 'Sí, datos móviles', label: 'Sí, mediante datos móviles', labelEn: 'Yes, via mobile data', sub: 'Jïsa, celular datosampi', subEn: 'Mobile data plan', icon: 'fa-signal' },
+              { value: 'Sí, Wi-Fi / Hogar', label: 'Sí, Wi-Fi en hogar o trabajo', labelEn: 'Yes, home or work Wi-Fi', sub: 'Jïsa, utana / irnaqawina', subEn: 'Wi-Fi connection', icon: 'fa-wifi' },
+              { value: 'Esporádico / Cabina', label: 'Solo a veces o en cabinas', labelEn: 'Occasionally or public spots', sub: 'Pisi pachanakaki', subEn: 'Sporadic access', icon: 'fa-clock' },
+              { value: 'No tiene acceso', label: 'No tiene acceso a internet', labelEn: 'No internet access', sub: 'Janiw utjkiti', subEn: 'No connection', icon: 'fa-circle-xmark' }
+            ]
+          }
+        ]
+      },
+      {
+        title: 'Barreras Digitales y Percepción en Pasankeri',
+        titleEn: 'Digital Barriers and Perception at Pasankeri',
+        subtitle: 'Principales dificultades para usar herramientas digitales y mejoras del mirador.',
+        subtitleEn: 'Main digital challenges and lookout improvements.',
+        questions: [
+          {
+            id: 'barrera_digital',
+            label: '4.1 ¿Cuál considera que es la principal barrera para usar servicios digitales? *',
+            labelEn: '4.1 What is the main barrier to using digital services? *',
+            aymara: 'Kunatsa yänak apnaqañ ch\'amäspa?',
+            subEn: 'Main digital barrier',
+            options: [
+              { value: 'Costo de datos', label: 'Costo de datos o equipos', labelEn: 'Data or device cost', sub: 'Qullqi munatawa', subEn: 'High cost', icon: 'fa-coins' },
+              { value: 'Falta de práctica', label: 'Falta de conocimiento o práctica', labelEn: 'Lack of knowledge or practice', sub: 'Yatiqañaw munasi', subEn: 'Limited familiarity', icon: 'fa-circle-question' },
+              { value: 'Idioma / Interfaz', label: 'Idioma o textos difíciles de leer', labelEn: 'Language or hard-to-read text', sub: 'Aru / Qillqata ch\'ama', subEn: 'Language or readability', icon: 'fa-font' },
+              { value: 'Sin barreras', label: 'No presenta dificultades', labelEn: 'No barriers', sub: 'Janiw ch\'amäkiti', subEn: 'No difficulties', icon: 'fa-thumbs-up' }
+            ]
+          },
+          {
+            id: 'prioridad_mirador',
+            label: '4.2 ¿Qué aspecto considera más importante mejorar en el entorno del Mirador? *',
+            labelEn: '4.2 What is most important to improve around the Lookout? *',
+            aymara: 'Kunas askichasiñapäspa Pasankeri miradoran?',
+            subEn: 'Priority improvement',
+            options: [
+              { value: 'Seguridad e iluminación', label: 'Seguridad e iluminación', labelEn: 'Safety and lighting', sub: 'Jark\'aqaña / Qhananchaña', subEn: 'Lighting & security', icon: 'fa-lightbulb' },
+              { value: 'Limpieza y áreas verdes', label: 'Limpieza, señalética y espacios', labelEn: 'Cleanliness, signage & green areas', sub: 'Q\'umachaña / Uñt\'ayawi', subEn: 'Upkeep & signs', icon: 'fa-tree' },
+              { value: 'Información turística', label: 'Información turística y cultural', labelEn: 'Tourist and cultural info', sub: 'Uñt\'ayañataki yatiyawi', subEn: 'Visitor guidance', icon: 'fa-compass' },
+              { value: 'Conectividad pública', label: 'Conectividad y orientación digital', labelEn: 'Connectivity and digital info', sub: 'Mayacht\'awi', subEn: 'Digital & network access', icon: 'fa-tower-cell' }
+            ]
+          }
+        ]
+      }
+    ];
+
+    let currentBlock = 0;
+    let currentAnswers = {};
+    let easyReading = false;
+    let langMode = 'es_ay'; // 'es_ay' | 'en'
+    let charts = {};
+
+    function getRecords() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+      } catch {
+        return [];
+      }
+    }
+
+    function saveRecords(list) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+      updateCountBadge();
+      renderTable();
+      if (!document.getElementById('view-dashboard').classList.contains('hidden')) {
+        renderDashboard();
+      }
+    }
+
+    function updateCountBadge() {
+      const count = getRecords().length;
+      document.getElementById('countBadge').textContent = count;
+      const clearEl = document.getElementById('clearCountLabel');
+      if (clearEl) clearEl.textContent = count;
+    }
+
+    function switchTab(tab) {
+      ['survey', 'dashboard', 'manage'].forEach(t => {
+        document.getElementById(`view-${t}`).classList.toggle('hidden', t !== tab);
+        document.getElementById(`tab-${t}`).classList.toggle('tab-active', t === tab);
+      });
+      if (tab === 'dashboard') renderDashboard();
+      if (tab === 'manage') renderTable();
+    }
+
+    function toggleEasyReading() {
+      easyReading = !easyReading;
+      const t = UI_TEXT[langMode];
+      document.getElementById('appContainer').classList.toggle('easy-reading', easyReading);
+      document.getElementById('easyLabel').textContent = easyReading ? t.easyOn : t.easyOff;
+    }
+
+    function applyStaticTranslations() {
+      const t = UI_TEXT[langMode];
+      document.documentElement.lang = langMode === 'en' ? 'en' : 'es';
+      document.getElementById('langLabel').textContent = t.langBtn;
+      document.getElementById('easyLabel').textContent = easyReading ? t.easyOn : t.easyOff;
+      document.getElementById('statusBadge').textContent = t.statusBadge;
+      document.getElementById('brandSubtitle').textContent = t.brandSubtitle;
+      document.getElementById('tabSurveyLabel').textContent = t.tabSurvey;
+      document.getElementById('tabDashboardLabel').textContent = t.tabDashboard;
+      document.getElementById('tabManageLabel').textContent = t.tabManage;
+      document.getElementById('progressText').textContent = t.progressText;
+      document.getElementById('validationText').textContent = t.validationText;
+      document.getElementById('btnPrevText').textContent = t.btnPrev;
+      document.getElementById('btnNextText').textContent = t.btnNext;
+      document.getElementById('btnSubmitText').textContent = t.btnSubmit;
+      document.getElementById('successTitle').innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600"></i> ${t.successTitle}`;
+      document.getElementById('btnNewSurveyText').textContent = t.btnNewSurvey;
+    }
+
+    function toggleLang() {
+      langMode = langMode === 'es_ay' ? 'en' : 'es_ay';
+      applyStaticTranslations();
+      renderBlock();
+    }
+
+    function renderBlock() {
+      const t = UI_TEXT[langMode];
+      const block = BLOCKS[currentBlock];
+      const totalBlocks = BLOCKS.length;
+      const pct = Math.round(((currentBlock + 1) / totalBlocks) * 100);
+
+      document.getElementById('blockIndicator').textContent = `${t.blockPrefix} ${currentBlock + 1} ${t.blockOf} ${totalBlocks}`;
+      document.getElementById('blockTitle').textContent = langMode === 'en' ? block.titleEn : block.title;
+      document.getElementById('blockSubtitle').textContent = langMode === 'en' ? block.subtitleEn : block.subtitle;
+      document.getElementById('progressPercent').textContent = `${pct}%`;
+      document.getElementById('progressBar').style.width = `${pct}%`;
+
+      const container = document.getElementById('questionsContainer');
+      container.innerHTML = '';
+
+      block.questions.forEach(q => {
+        const qDiv = document.createElement('div');
+        const mainLabel = langMode === 'en' ? q.labelEn : q.label;
+        const subText = langMode === 'en' ? q.subEn : q.aymara;
+
+        qDiv.innerHTML = `
+          <div class="mb-3">
+            <p class="question-title font-bold text-slate-900 text-base">${mainLabel}</p>
+            <p class="aymara-sub text-xs text-slate-500 mt-0.5 italic">${subText}</p>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3" id="opts-${q.id}"></div>
+        `;
+        container.appendChild(qDiv);
+
+        const optsGrid = qDiv.querySelector(`#opts-${q.id}`);
+        q.options.forEach(opt => {
+          const isSelected = currentAnswers[q.id] === opt.value;
+          const optLabel = langMode === 'en' ? opt.labelEn : opt.label;
+          const optSub = langMode === 'en' ? opt.subEn : opt.sub;
+
+          const card = document.createElement('button');
+          card.type = 'button';
+          card.className = `option-card p-3.5 rounded-xl text-left flex items-start gap-3 ${isSelected ? 'selected' : ''}`;
+          card.onclick = () => selectOption(q.id, opt.value);
+          card.innerHTML = `
+            <div class="w-9 h-9 rounded-lg ${isSelected ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600'} flex items-center justify-center shrink-0 mt-0.5">
+              <i class="fa-solid ${opt.icon}"></i>
+            </div>
+            <div>
+              <div class="option-label font-semibold text-slate-800 text-sm">${optLabel}</div>
+              <div class="text-xs text-slate-500 mt-0.5">${optSub}</div>
+            </div>
+          `;
+          optsGrid.appendChild(card);
+        });
+      });
+
+      document.getElementById('btnPrev').disabled = currentBlock === 0;
+      const isLast = currentBlock === totalBlocks - 1;
+      document.getElementById('btnNext').classList.toggle('hidden', isLast);
+      document.getElementById('btnSubmit').classList.toggle('hidden', !isLast);
+      document.getElementById('validationAlert').classList.add('hidden');
+    }
+
+    function selectOption(questionId, value) {
+      currentAnswers[questionId] = value;
+      document.getElementById('validationAlert').classList.add('hidden');
+      renderBlock();
+    }
+
+    function validateCurrentBlock() {
+      const block = BLOCKS[currentBlock];
+      const missing = block.questions.some(q => !currentAnswers[q.id]);
+      if (missing) {
+        document.getElementById('validationAlert').classList.remove('hidden');
+        return false;
+      }
+      return true;
+    }
+
+    function nextBlock() {
+      if (!validateCurrentBlock()) return;
+      if (currentBlock < BLOCKS.length - 1) {
+        currentBlock++;
+        renderBlock();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function prevBlock() {
+      if (currentBlock > 0) {
+        currentBlock--;
+        renderBlock();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }
+
+    function getCloudConfig() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(CLOUD_CFG_KEY) || '{}');
+        return {
+          url: (saved.url || DEFAULT_SUPABASE_URL).trim(),
+          key: (saved.key || '').trim()
+        };
+      } catch {
+        return { url: DEFAULT_SUPABASE_URL, key: '' };
+      }
+    }
+
+    function loadCloudConfigToInputs() {
+      const cfg = getCloudConfig();
+      document.getElementById('cloudUrl').value = cfg.url;
+      document.getElementById('cloudKey').value = cfg.key;
+    }
+
+    function saveCloudConfig() {
+      const url = document.getElementById('cloudUrl').value.trim();
+      const key = document.getElementById('cloudKey').value.trim();
+
+      if (url && !url.startsWith('https://')) {
+        document.getElementById('cloudConfigMsg').textContent = 'La Endpoint URL debe comenzar con https://';
+        return;
+      }
+
+      localStorage.setItem(CLOUD_CFG_KEY, JSON.stringify({ url, key }));
+      document.getElementById('cloudConfigMsg').textContent = 'Configuración guardada en este navegador.';
+    }
+
+    function buildPostgresPayload(record) {
+      return {
+        id: record.id,
+        timestamp: record.timestamp,
+        edad: record.edad || null,
+        vinculo_pasankeri: record.vinculo_pasankeri || null,
+        procedencia: record.procedencia || null,
+        idioma: record.idioma || null,
+        educacion: record.educacion || null,
+        ocupacion: record.ocupacion || null,
+        dispositivo: record.dispositivo || null,
+        internet: record.internet || null,
+        barrera_digital: record.barrera_digital || null,
+        prioridad_mirador: record.prioridad_mirador || null
+      };
+    }
+
+    async function postToPostgres(record, cfg) {
+      const isSupabase = cfg.url.includes('.supabase.co');
+      const headers = {
+        'Content-Type': 'application/json'
+      };
+
+      if (isSupabase) {
+        if (!cfg.key) {
+          throw new Error('Falta la Supabase anon public key en API Key / Bearer Token.');
+        }
+        headers['apikey'] = cfg.key;
+        headers['Authorization'] = `Bearer ${cfg.key}`;
+        headers['Prefer'] = 'return=representation';
+      } else if (cfg.key) {
+        headers['Authorization'] = `Bearer ${cfg.key}`;
+      }
+
+      const body = isSupabase ? buildPostgresPayload(record) : record;
+      const response = await fetch(cfg.url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body)
+      });
+
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`HTTP ${response.status}: ${errText || 'Error al insertar en endpoint'}`);
+      }
+    }
+
+    async function submitSurvey() {
+      if (!validateCurrentBlock()) return;
+
+      const now = new Date();
+      const record = {
+        id: `psk-${now.getTime()}-${Math.random().toString(36).slice(2, 7)}`,
+        fecha: now.toISOString().slice(0, 10),
+        timestamp: now.toISOString(),
+        ...currentAnswers,
+        synced: false,
+        sync_target: null
+      };
+
+      const records = getRecords();
+      records.unshift(record);
+      saveRecords(records);
+
+      const cfg = getCloudConfig();
+      const statusEl = document.getElementById('syncStatusText');
+
+      if (cfg.url) {
+        try {
+          await postToPostgres(record, cfg);
+          const updated = getRecords().map(r =>
+            r.id === record.id ? { ...r, synced: true, sync_target: 'PostgreSQL' } : r
+          );
+          saveRecords(updated);
+          statusEl.textContent = 'Guardada en el dispositivo y sincronizada con Supabase PostgreSQL.';
+        } catch (err) {
+          statusEl.textContent = `Guardada localmente (pendiente de sync): ${err.message}`;
+        }
+      } else {
+        statusEl.textContent = 'Guardada en el dispositivo (modo offline seguro).';
+      }
+
+      document.getElementById('btnPrev').classList.add('hidden');
+      document.getElementById('btnNext').classList.add('hidden');
+      document.getElementById('btnSubmit').classList.add('hidden');
+      document.getElementById('submitSuccess').classList.remove('hidden');
+    }
+
+    async function syncPendingRecords() {
+      const msgEl = document.getElementById('cloudConfigMsg');
+      const cfg = getCloudConfig();
+
+      if (!cfg.url) {
+        msgEl.textContent = 'Primero ingresa y guarda una Endpoint URL.';
+        return;
+      }
+
+      const records = getRecords();
+      const pending = records.filter(r => !r.synced);
+
+      if (pending.length === 0) {
+        msgEl.textContent = 'Sincronizados 0 registro(s) pendientes.';
+        return;
+      }
+
+      msgEl.textContent = `Sincronizando ${pending.length} registro(s)...`;
+      let syncedCount = 0;
+      let lastError = '';
+
+      for (const item of pending) {
+        try {
+          await postToPostgres(item, cfg);
+          item.synced = true;
+          item.sync_target = 'PostgreSQL';
+          syncedCount++;
+        } catch (err) {
+          lastError = err.message;
+        }
+      }
+
+      saveRecords(records);
+
+      if (lastError && syncedCount === 0) {
+        msgEl.textContent = `No se pudo sincronizar: ${lastError}`;
+      } else if (lastError) {
+        msgEl.textContent = `Sincronizados ${syncedCount} de ${pending.length}. Error en el resto: ${lastError}`;
+      } else {
+        msgEl.textContent = `Sincronizados ${syncedCount} registro(s) pendientes correctamente.`;
+      }
+    }
+
+    function resetFormForNext() {
+      currentBlock = 0;
+      currentAnswers = {};
+      document.getElementById('submitSuccess').classList.add('hidden');
+      document.getElementById('btnPrev').classList.remove('hidden');
+      renderBlock();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('recordsTableBody');
+      const records = getRecords();
+      tbody.innerHTML = '';
+
+      if (records.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" class="py-4 text-center text-slate-400">No hay registros almacenados todavía.</td></tr>`;
+        return;
+      }
+
+      records.forEach((r, idx) => {
+        const tr = document.createElement('tr');
+        const syncBadge = r.synced
+          ? `<span class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-semibold">${r.sync_target || 'Sincronizado'}</span>`
+          : `<span class="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold">Local</span>`;
+
+        tr.innerHTML = `
+          <td class="py-2 pr-3 font-semibold">${idx + 1}</td>
+          <td class="py-2 pr-3">${r.fecha || (r.timestamp || '').slice(0, 10)}</td>
+          <td class="py-2 pr-3">${r.edad || '-'}</td>
+          <td class="py-2 pr-3">${r.vinculo_pasankeri || '-'}</td>
+          <td class="py-2 pr-3">${r.procedencia || '-'}</td>
+          <td class="py-2 pr-3">${r.idioma || '-'}</td>
+          <td class="py-2 pr-3">${r.internet || '-'}</td>
+          <td class="py-2">${syncBadge}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function exportCSV() {
+      const records = getRecords();
+      if (!records.length) return;
+      const headers = ['id', 'timestamp', 'edad', 'vinculo_pasankeri', 'procedencia', 'idioma', 'educacion', 'ocupacion', 'dispositivo', 'internet', 'barrera_digital', 'prioridad_mirador', 'synced'];
+      const rows = records.map(r => headers.map(h => `"${String(r[h] ?? '').replace(/"/g, '""')}"`).join(','));
+      const csv = '\uFEFF' + [headers.join(','), ...rows].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `encuestas_pasankeri_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function exportJSON() {
+      const records = getRecords();
+      const blob = new Blob([JSON.stringify(records, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `encuestas_pasankeri_${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function loadSampleData() {
+      const sample = [];
+      const edades = ['18-29', '30-44', '45-59', '60+'];
+      const vinculos = ['no_vive_visitante', 'no_vive_trabajo', 'menos_1_ano', '1_a_5_anos', 'mas_5_anos'];
+      const origenes = ['La Paz Urbana', 'Área Rural / Provincias', 'Otro Departamento', 'Extranjero / Visitante'];
+      const idiomas = ['Castellano', 'Aymara', 'Bilingüe', 'Quechua'];
+      const internets = ['Sí, datos móviles', 'Sí, Wi-Fi / Hogar', 'Esporádico / Cabina', 'No tiene acceso'];
+
+      for (let i = 0; i < 25; i++) {
+        const d = new Date(Date.now() - i * 3600000);
+        sample.push({
+          id: `demo-${d.getTime()}-${i}`,
+          fecha: d.toISOString().slice(0, 10),
+          timestamp: d.toISOString(),
+          edad: edades[i % edades.length],
+          vinculo_pasankeri: vinculos[i % vinculos.length],
+          procedencia: origenes[i % origenes.length],
+          idioma: idiomas[i % idiomas.length],
+          educacion: 'Secundaria',
+          ocupacion: 'Comercio / Independiente',
+          dispositivo: 'Smartphone',
+          internet: internets[i % internets.length],
+          barrera_digital: 'Costo de datos',
+          prioridad_mirador: 'Seguridad e iluminación',
+          synced: false,
+          sync_target: null
+        });
+      }
+
+      saveRecords([...sample, ...getRecords()]);
+    }
+
+    function clearAllRecords() {
+      if (!confirm('¿Desea eliminar todos los registros almacenados en este navegador?')) return;
+      saveRecords([]);
+    }
+
+    function countBy(list, field) {
+      return list.reduce((acc, item) => {
+        const key = item[field] || 'Sin dato';
+        acc[key] = (acc[key] || 0) + 1;
+        return acc;
+      }, {});
+    }
+
+    function buildChart(canvasId, type, labelMap) {
+      const ctx = document.getElementById(canvasId);
+      if (!ctx) return;
+      if (charts[canvasId]) charts[canvasId].destroy();
+
+      const labels = Object.keys(labelMap);
+      const data = Object.values(labelMap);
+
+      charts[canvasId] = new Chart(ctx, {
+        type,
+        data: {
+          labels,
+          datasets: [{
+            label: 'Encuestas',
+            data,
+            backgroundColor: ['#2563eb', '#ea580c', '#0d9488', '#d97706', '#6366f1']
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: type === 'doughnut' || type === 'pie' } }
+        }
+      });
+    }
+
+    function renderDashboard() {
+      const records = getRecords();
+      const total = records.length;
+
+      document.getElementById('kpiTotal').textContent = total;
+      if (total === 0) {
+        document.getElementById('kpiVisitors').textContent = '0%';
+        document.getElementById('kpiInternet').textContent = '0%';
+        document.getElementById('kpiLangDiversity').textContent = '0%';
+        ['chartVinculo', 'chartOrigen', 'chartIdioma', 'chartConectividad'].forEach(id => {
+          if (charts[id]) {
+            charts[id].destroy();
+            delete charts[id];
+          }
+        });
+        return;
+      }
+
+      const visitors = records.filter(r => String(r.vinculo_pasankeri || '').startsWith('no_vive')).length;
+      const withNet = records.filter(r => String(r.internet || '').startsWith('Sí')).length;
+      const nonSpanish = records.filter(r => r.idioma && r.idioma !== 'Castellano').length;
+
+      document.getElementById('kpiVisitors').textContent = `${Math.round((visitors / total) * 100)}%`;
+      document.getElementById('kpiInternet').textContent = `${Math.round((withNet / total) * 100)}%`;
+      document.getElementById('kpiLangDiversity').textContent = `${Math.round((nonSpanish / total) * 100)}%`;
+
+      buildChart('chartVinculo', 'bar', countBy(records, 'vinculo_pasankeri'));
+      buildChart('chartOrigen', 'doughnut', countBy(records, 'procedencia'));
+      buildChart('chartIdioma', 'bar', countBy(records, 'idioma'));
+      buildChart('chartConectividad', 'bar', countBy(records, 'internet'));
+    }
+
+    // Inicialización
+    applyStaticTranslations();
+    loadCloudConfigToInputs();
+    updateCountBadge();
+    renderBlock();
+    renderTable();
+  </script>
+</body>
+</html>
